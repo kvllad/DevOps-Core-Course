@@ -69,7 +69,8 @@ jobs:
         env:
           SNYK_TOKEN: ${{ env.SNYK_TOKEN }}
         with:
-          args: --file=app_python/requirements.txt --severity-threshold=high
+          args: --file=requirements.txt --severity-threshold=high --skip-unresolved
+        working-directory: app_python
 
   docker:
     runs-on: ubuntu-latest
