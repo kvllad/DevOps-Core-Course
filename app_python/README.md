@@ -32,3 +32,14 @@ HOST=127.0.0.1 PORT=3000 DEBUG=true python app.py
 | `HOST` | `0.0.0.0` | Bind address |
 | `PORT` | `5000` | Port to listen on |
 | `DEBUG` | `False` | Enables auto-reload when `true` |
+
+## Docker
+Build the image locally (pattern):
+`docker build -t <image-name>:<tag> <path-to-app_python>`
+
+Run a container (pattern):
+`docker run --rm -p <host-port>:5000 --name <container-name> <image-name>:<tag>`
+
+Pull from Docker Hub (pattern):
+`docker pull <dockerhub-username>/<image-name>:<tag>`
+`docker run --rm -p <host-port>:5000 <dockerhub-username>/<image-name>:<tag>`
