@@ -15,12 +15,30 @@
   - Docker tags: `YYYY.MM.DD` + `latest`.
 
 ## 2. Workflow Evidence
-**Local test run (blocked in this environment)**
+**Local test run**
 ```
-python3 -m pip install -r app_python/requirements.txt -r app_python/requirements-dev.txt
-PYTHONPATH=app_python pytest -c app_python/pytest.ini
+vladkuznetsov@MacBook-Air-5 DevOps-Core-Course % PYTHONPATH=app_python pytest -c app_python/pytest.ini
+=================================================================================================================== test session starts ===================================================================================================================
+platform darwin -- Python 3.11.9, pytest-8.3.3, pluggy-1.6.0
+rootdir: /Users/vladkuznetsov/inno/DevOps-Core-Course/app_python
+configfile: pytest.ini
+plugins: anyio-4.12.1, cov-5.0.0
+collected 3 items                                                                                                                                                                                                                                         
+
+app_python/tests/test_app.py ...                                                                                                                                                                                                                    [100%]
+
+---------- coverage: platform darwin, python 3.11.9-final-0 ----------
+Name                Stmts   Miss  Cover   Missing
+-------------------------------------------------
+app_python/app.py      49      4    92%   124, 134-137
+-------------------------------------------------
+TOTAL                  49      4    92%
+Coverage XML written to file coverage.xml
+
+Required test coverage of 70% reached. Total coverage: 91.84%
+
+==================================================================================================================== 3 passed in 0.26s ====================================================================================================================
 ```
-**Status:** not executed here because the environment has no outbound network access (pip cannot download dependencies). Run the commands above locally and paste the output here.
 
 **Workflow run link**
 - `TBD` (add the successful Actions run URL after pushing)
@@ -52,7 +70,7 @@ PYTHONPATH=app_python pytest -c app_python/pytest.ini
 - **Versioning**: CalVer because the service is released continuously and doesn’t need SemVer semantics.
 - **Docker tags**: `YYYY.MM.DD` for traceability + `latest` for convenience.
 - **Workflow triggers**: path-based filters to avoid unnecessary CI for unrelated changes.
-- **Coverage**: `pytest-cov` with a 70% minimum threshold (`pytest.ini`).
+- **Coverage**: `pytest-cov` with a 70% minimum threshold (`pytest.ini`). Current coverage: **91.84%**.
 
 ## 5. Bonus — Multi-App CI + Coverage
 - **Second workflow**: `.github/workflows/go-ci.yml` for the Go app.
@@ -60,11 +78,11 @@ PYTHONPATH=app_python pytest -c app_python/pytest.ini
   - Uses the same CalVer tags and `latest`.
 - **Path filters**: Python and Go workflows only run when their respective folders change.
 - **Coverage tracking**: `pytest-cov` generates `coverage.xml`, uploaded to Codecov in CI.
-  - Coverage badge added to README.
-  - `TBD`: actual coverage percentage after first run.
+- Coverage badge added to README.
+- Current coverage (local): **91.84%**.
 
 ## 6. Challenges
-- **No internet in this environment**: pip could not download dependencies, so local test output could not be captured here. Run tests locally and paste the output above.
+- **No internet in this environment**: pip could not download dependencies here, so tests were run on the host machine and output is recorded above.
 
 ## Secrets Required (GitHub)
 Add these repository secrets before the workflow can publish images and run scans:
