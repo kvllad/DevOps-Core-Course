@@ -1,5 +1,8 @@
 # DevOps Info Service (FastAPI)
 
+![Python CI](https://github.com/kvllad/DevOps-Core-Course/actions/workflows/python-ci.yml/badge.svg)
+[![Coverage](https://codecov.io/gh/kvllad/DevOps-Core-Course/branch/master/graph/badge.svg)](https://codecov.io/gh/kvllad/DevOps-Core-Course)
+
 ## Overview
 This service exposes system and runtime information for DevOps learning labs. It provides a main endpoint with detailed metadata and a simple health check for monitoring.
 
@@ -21,6 +24,13 @@ python app.py
 PORT=8080 python app.py
 HOST=127.0.0.1 PORT=3000 DEBUG=true python app.py
 ```
+
+## Testing
+Install dev dependencies (pattern):
+`pip install -r app_python/requirements.txt -r app_python/requirements-dev.txt`
+
+Run tests with coverage (pattern):
+`PYTHONPATH=app_python pytest -c app_python/pytest.ini`
 
 ## API Endpoints
 - `GET /` - Service and system information
