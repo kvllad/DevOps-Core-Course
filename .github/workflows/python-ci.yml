@@ -25,6 +25,8 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     strategy:
       fail-fast: true
       matrix:
@@ -62,10 +64,10 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Snyk scan
-        if: ${{ secrets.SNYK_TOKEN != '' }}
+        if: ${{ env.SNYK_TOKEN != '' }}
         uses: snyk/actions/python@master
         env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+          SNYK_TOKEN: ${{ env.SNYK_TOKEN }}
         with:
           args: --file=app_python/requirements.txt --severity-threshold=high
 
