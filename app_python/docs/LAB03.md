@@ -41,7 +41,7 @@ Required test coverage of 70% reached. Total coverage: 91.84%
 ```
 
 **Workflow run link**
-- `TBD` (send me the URL from Actions and I will insert it)
+- https://github.com/kvllad/DevOps-Core-Course/actions/runs/21797773596
 
 **Docker Hub image (Python)**
 - `https://hub.docker.com/r/vladk6813050/devops-info-service-py`
