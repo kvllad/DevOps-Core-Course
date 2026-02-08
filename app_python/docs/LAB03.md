@@ -41,10 +41,14 @@ Required test coverage of 70% reached. Total coverage: 91.84%
 ```
 
 **Workflow run link**
-- `TBD` (add the successful Actions run URL after pushing)
+- `TBD` (send me the URL from Actions and I will insert it)
 
 **Docker Hub image (Python)**
 - `https://hub.docker.com/r/vladk6813050/devops-info-service-py`
+
+**CI test evidence**
+- Python 3.12: `3 passed in 1.26s`, coverage `91.84%`
+- Python 3.13: `3 passed in 0.60s`, coverage `91.84%`
 
 **Status badge**
 - Python CI badge added to `app_python/README.md`.
@@ -59,12 +63,13 @@ Required test coverage of 70% reached. Total coverage: 91.84%
 - **Least privilege**: workflow permissions limited to `contents: read`.
 
 **Caching speed improvement**
-- `TBD`: record first run (cache miss) vs second run (cache hit) from Actions logs.
+- First run (cache miss): `pip cache is not found`
+- Cache saved: `Cache saved with the key: setup-python-Linux-x64-24.04-Ubuntu-python-3.12.12-pip-5e39d1e1ee6ff5df7fe2edacb44905b46ff4830f6fb663e88586ce2c46fce07d`
+- Next run should show cache hit and faster install.
 
 **Snyk scan**
 - Integrated via `snyk/actions/python`.
-- Requires `SNYK_TOKEN` secret; step is skipped if missing.
-- `TBD`: record vulnerabilities (if any) after first run.
+- Result: `✔ Tested /github/workspace for known issues, no vulnerable paths found.`
 
 ## 4. Key Decisions
 - **Versioning**: CalVer because the service is released continuously and doesn’t need SemVer semantics.
@@ -80,6 +85,7 @@ Required test coverage of 70% reached. Total coverage: 91.84%
 - **Coverage tracking**: `pytest-cov` generates `coverage.xml`, uploaded to Codecov in CI.
 - Coverage badge added to README.
 - Current coverage (local): **91.84%**.
+- Codecov upload (CI): https://app.codecov.io/github/kvllad/devops-core-course/commit/f6009e758c6aec3273e7401b9de02af028613340
 
 ## 6. Challenges
 - **No internet in this environment**: pip could not download dependencies here, so tests were run on the host machine and output is recorded above.
