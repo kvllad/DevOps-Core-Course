@@ -1,0 +1,11 @@
+aws_region         = "us-east-1"
+availability_zone  = "us-east-1a"
+project_name       = "devops-core-course-lab04"
+environment        = "dev"
+instance_type      = "t2.micro"
+root_volume_size   = 8
+ssh_public_key_path = "~/.ssh/id_ed25519.pub"
+ssh_private_key_path = "~/.ssh/id_ed25519"
+
+# Replace with your real public IP in CIDR format, e.g. 95.24.10.10/32
+ssh_allowed_cidr = "203.0.113.10/32"

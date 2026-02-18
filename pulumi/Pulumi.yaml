@@ -1,0 +1,4 @@
+name: lab04-iac
+runtime:
+  name: python
+description: Lab 04 infrastructure with Pulumi (AWS)

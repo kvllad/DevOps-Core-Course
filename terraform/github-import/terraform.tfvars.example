@@ -1,0 +1,6 @@
+github_owner            = "your-github-login"
+repository_name         = "DevOps-Core-Course"
+repository_description  = "DevOps course lab assignments"
+repository_visibility   = "public"
+has_issues              = true
+has_wiki                = false
