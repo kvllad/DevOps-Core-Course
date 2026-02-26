@@ -1,15 +1,3 @@
 ---
-- name: Full Lab 06 Provisioning and Deployment
-  hosts: webservers
-  become: true
-
-  roles:
-    - role: common
-      tags:
-        - common
-    - role: docker
-      tags:
-        - docker
-    - role: web_app
-      tags:
-        - web_app
+- import_playbook: provision.yml
+- import_playbook: deploy.yml

@@ -1,5 +1,5 @@
 ---
-- name: Provision Base System
+- name: Provision web servers
   hosts: webservers
   become: true
 

@@ -41,3 +41,8 @@ pulumi/Pulumi.*.yaml
 service-account*.json
 .env
 .env.*
+
+# Ansible
+*.retry
+.vault_pass
+ansible/inventory/*.pyc

@@ -1,0 +1,12 @@
+---
+app_name: devops-app
+docker_image: "{{ dockerhub_username }}/{{ app_name }}"
+docker_image_tag: latest
+app_port: 5000
+app_container_port: 5000
+app_container_name: "{{ app_name }}"
+app_restart_policy: unless-stopped
+app_env: {}
+app_healthcheck_path: /health
+app_healthcheck_delay: 3
+app_healthcheck_retries: 10

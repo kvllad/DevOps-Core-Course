@@ -1,0 +1,23 @@
+plugin: amazon.aws.aws_ec2
+
+regions:
+  - eu-central-1
+
+filters:
+  instance-state-name: running
+  tag:Project: devops-core-course
+
+hostnames:
+  - tag:Name
+  - private-ip-address
+
+compose:
+  ansible_host: public_ip_address
+  ansible_user: "'ubuntu'"
+
+groups:
+  webservers: "tags.Role is defined and tags.Role == 'web'"
+
+keyed_groups:
+  - key: tags.Environment
+    prefix: env
