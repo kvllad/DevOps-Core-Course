@@ -1,0 +1,15 @@
+---
+docker_repo_arch_map:
+  x86_64: amd64
+  aarch64: arm64
+
+docker_packages:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-buildx-plugin
+  - docker-compose-plugin
+
+docker_user: ubuntu
+docker_service_state: started
+docker_service_enabled: true
