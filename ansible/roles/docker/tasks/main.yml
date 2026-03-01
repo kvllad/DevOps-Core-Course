@@ -1,0 +1,93 @@
+---
+- name: Install Docker engine and compose plugin
+  block:
+    - name: Install repository prerequisites
+      ansible.builtin.apt:
+        name: "{{ docker_prereq_packages }}"
+        state: present
+        update_cache: true
+
+    - name: Ensure apt keyrings directory exists
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+
+    - name: Download Docker GPG key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: "0644"
+
+    - name: Configure Docker apt repository
+      ansible.builtin.apt_repository:
+        repo: "{{ docker_repo_url }}"
+        state: present
+
+    - name: Install Docker packages
+      ansible.builtin.apt:
+        name: "{{ docker_packages }}"
+        state: present
+        update_cache: true
+
+  rescue:
+    - name: Wait before retrying Docker repository setup
+      ansible.builtin.wait_for:
+        timeout: 10
+
+    - name: Retry Docker GPG key download after transient failure
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: "0644"
+
+    - name: Install distribution Docker packages as fallback
+      ansible.builtin.apt:
+        name:
+          - docker.io
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+
+  always:
+    - name: Ensure Docker service is enabled and started
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+  become: true
+  tags:
+    - docker
+    - docker_install
+
+- name: Configure Docker access
+  block:
+    - name: Ensure docker group exists
+      ansible.builtin.group:
+        name: docker
+        state: present
+
+    - name: Add declared users to docker group
+      ansible.builtin.user:
+        name: "{{ item }}"
+        groups: docker
+        append: true
+      loop: "{{ docker_users }}"
+
+  rescue:
+    - name: Report Docker configuration failure
+      ansible.builtin.debug:
+        msg: "Docker user membership update failed; verify declared users exist."
+
+  always:
+    - name: Re-assert Docker daemon state after configuration
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+  become: true
+  tags:
+    - docker
+    - docker_config

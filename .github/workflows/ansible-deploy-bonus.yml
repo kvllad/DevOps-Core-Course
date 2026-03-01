@@ -1,0 +1,109 @@
+name: Ansible Bonus Deployment
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - ansible/vars/app_bonus.yml
+      - ansible/playbooks/deploy_bonus.yml
+      - ansible/roles/web_app/**
+      - ansible/roles/docker/**
+      - ansible/requirements.yml
+      - .github/workflows/ansible-deploy-bonus.yml
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - ansible/vars/app_bonus.yml
+      - ansible/playbooks/deploy_bonus.yml
+      - ansible/roles/web_app/**
+      - ansible/roles/docker/**
+      - ansible/requirements.yml
+      - .github/workflows/ansible-deploy-bonus.yml
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: Bonus App Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Ansible tooling
+        run: pip install ansible ansible-lint
+
+      - name: Install required collection
+        run: ansible-galaxy collection install -r ansible/requirements.yml
+
+      - name: Run syntax checks
+        working-directory: ansible
+        run: ansible-playbook --syntax-check playbooks/deploy_bonus.yml
+
+      - name: Run ansible-lint
+        working-directory: ansible
+        run: ansible-lint playbooks roles
+
+  deploy:
+    name: Deploy Bonus Application
+    if: github.event_name != 'pull_request'
+    needs: lint
+    runs-on: ubuntu-latest
+    env:
+      VM_HOST: ${{ secrets.VM_HOST }}
+      VM_USER: ${{ secrets.VM_USER }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Ansible runtime
+        run: pip install ansible
+
+      - name: Install required collection
+        run: ansible-galaxy collection install -r ansible/requirements.yml
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$VM_HOST" >> ~/.ssh/known_hosts
+
+      - name: Render CI inventory
+        working-directory: ansible
+        run: |
+          cat <<EOF > inventory/ci.ini
+          [webservers]
+          ci-target ansible_host=${VM_HOST} ansible_user=${VM_USER} ansible_ssh_private_key_file=~/.ssh/id_ed25519
+
+          [webservers:vars]
+          ansible_python_interpreter=/usr/bin/python3
+          EOF
+
+      - name: Deploy Bonus Application
+        working-directory: ansible
+        run: |
+          printf '%s\n' "$ANSIBLE_VAULT_PASSWORD" > /tmp/vault_pass
+          ansible-playbook -i inventory/ci.ini playbooks/deploy_bonus.yml --vault-password-file /tmp/vault_pass
+          rm -f /tmp/vault_pass
+
+      - name: Verify Bonus App Deployment
+        run: |
+          sleep 10
+          curl -fsS "http://${VM_HOST}:8001/"
+          curl -fsS "http://${VM_HOST}:8001/health"

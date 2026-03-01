@@ -1,0 +1,64 @@
+---
+# Keep wipe first so a single run can perform clean reinstall when requested.
+- name: Include wipe tasks before deployment
+  ansible.builtin.include_tasks: wipe.yml
+  tags:
+    - web_app_wipe
+
+- name: Deploy application with Docker Compose
+  block:
+    - name: Create compose project directory
+      ansible.builtin.file:
+        path: "{{ compose_project_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Render docker compose template
+      ansible.builtin.template:
+        src: docker-compose.yml.j2
+        dest: "{{ compose_project_dir }}/docker-compose.yml"
+        mode: "0644"
+
+    - name: Apply Docker Compose project
+      community.docker.docker_compose_v2:
+        project_src: "{{ compose_project_dir }}"
+        state: present
+        pull: always
+        recreate: auto
+      register: web_app_compose_result
+
+    - name: Verify application health endpoint
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ app_port }}/health"
+        status_code: 200
+      register: web_app_healthcheck
+      retries: 5
+      delay: 5
+      until: web_app_healthcheck.status == 200
+      changed_when: false
+
+  rescue:
+    - name: Capture compose logs on deployment failure
+      ansible.builtin.command:
+        argv:
+          - docker
+          - compose
+          - -f
+          - "{{ compose_project_dir }}/docker-compose.yml"
+          - logs
+          - --tail
+          - "50"
+      register: web_app_compose_logs
+      changed_when: false
+      failed_when: false
+
+    - name: Fail with captured deployment details
+      ansible.builtin.fail:
+        msg: >-
+          Compose deployment failed for {{ app_name }}.
+          Recent logs: {{ web_app_compose_logs.stdout | default('no logs collected') }}
+
+  tags:
+    - web_app
+    - app_deploy
+    - compose

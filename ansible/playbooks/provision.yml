@@ -1,0 +1,12 @@
+---
+- name: Provision Base System
+  hosts: webservers
+  become: true
+
+  roles:
+    - role: common
+      tags:
+        - common
+    - role: docker
+      tags:
+        - docker
