@@ -6,6 +6,10 @@
     - web_app_wipe
 
 - name: Deploy application with Docker Compose
+  tags:
+    - web_app
+    - app_deploy
+    - compose
   block:
     - name: Create compose project directory
       ansible.builtin.file:
@@ -57,8 +61,3 @@
         msg: >-
           Compose deployment failed for {{ app_name }}.
           Recent logs: {{ web_app_compose_logs.stdout | default('no logs collected') }}
-
-  tags:
-    - web_app
-    - app_deploy
-    - compose

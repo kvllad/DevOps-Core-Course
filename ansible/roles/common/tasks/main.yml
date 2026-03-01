@@ -1,5 +1,9 @@
 ---
 - name: Install common system packages
+  become: true
+  tags:
+    - common
+    - packages
   block:
     - name: Refresh apt cache
       ansible.builtin.apt:
@@ -13,7 +17,9 @@
 
   rescue:
     - name: Repair apt metadata after failed cache refresh
-      ansible.builtin.command: apt-get update --fix-missing
+      ansible.builtin.apt:
+        update_cache: true
+        force_apt_get: true
       changed_when: true
 
     - name: Retry package installation after repair
@@ -29,12 +35,11 @@
         content: "common/packages finished at {{ ansible_date_time.iso8601 }}\n"
         mode: "0644"
 
+- name: Ensure operator user exists
   become: true
   tags:
     - common
-    - packages
-
-- name: Ensure operator user exists
+    - users
   block:
     - name: Create operator group memberships
       ansible.builtin.user:
@@ -63,8 +68,3 @@
         dest: /tmp/ansible-common-users.log
         content: "common/users finished at {{ ansible_date_time.iso8601 }}\n"
         mode: "0644"
-
-  become: true
-  tags:
-    - common
-    - users

@@ -1,5 +1,9 @@
 ---
 - name: Install Docker engine and compose plugin
+  become: true
+  tags:
+    - docker
+    - docker_install
   block:
     - name: Install repository prerequisites
       ansible.builtin.apt:
@@ -56,12 +60,11 @@
         state: started
         enabled: true
 
+- name: Configure Docker access
   become: true
   tags:
     - docker
-    - docker_install
-
-- name: Configure Docker access
+    - docker_config
   block:
     - name: Ensure docker group exists
       ansible.builtin.group:
@@ -86,8 +89,3 @@
         name: docker
         state: started
         enabled: true
-
-  become: true
-  tags:
-    - docker
-    - docker_config
