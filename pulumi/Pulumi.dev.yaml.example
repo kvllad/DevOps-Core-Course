@@ -1,0 +1,14 @@
+config:
+  aws:region: us-east-1
+  lab04-iac:projectName: devops-core-course-lab04
+  lab04-iac:environment: dev
+  lab04-iac:availabilityZone: us-east-1a
+  lab04-iac:vpcCidr: 10.42.0.0/16
+  lab04-iac:publicSubnetCidr: 10.42.1.0/24
+  lab04-iac:instanceType: t2.micro
+  lab04-iac:instanceUser: ubuntu
+  lab04-iac:sshPrivateKeyPath: ~/.ssh/id_ed25519
+  lab04-iac:sshAllowedCidr: 203.0.113.10/32
+  # Set your real public key. Example:
+  # pulumi config set lab04-iac:sshPublicKey "$(cat ~/.ssh/id_ed25519.pub)"
+  lab04-iac:sshPublicKey: "ssh-ed25519 REPLACE_ME student@host"

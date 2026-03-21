@@ -1,0 +1,51 @@
+name: Terraform CI
+
+on:
+  pull_request:
+    paths:
+      - "terraform/**"
+      - ".github/workflows/terraform-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate Terraform (${{ matrix.working_directory }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        working_directory:
+          - terraform
+          - terraform/github-import
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+
+      - name: Terraform fmt check
+        run: terraform fmt -check -recursive
+        working-directory: ${{ matrix.working_directory }}
+
+      - name: Terraform init
+        run: terraform init -backend=false
+        working-directory: ${{ matrix.working_directory }}
+
+      - name: Terraform validate
+        run: terraform validate
+        working-directory: ${{ matrix.working_directory }}
+
+      - name: TFLint init
+        run: tflint --init
+        working-directory: ${{ matrix.working_directory }}
+
+      - name: TFLint
+        run: tflint --format compact
+        working-directory: ${{ matrix.working_directory }}
