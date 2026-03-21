@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	"encoding/json"
-	"log"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -63,10 +63,19 @@ type Health struct {
 	UptimeSeconds int    `json:"uptime_seconds"`
 }
 
+type statusRecorder struct {
+	http.ResponseWriter
+	statusCode int
+}
+
 var startTime = time.Now().UTC()
 
 func nowISO() string {
 	return time.Now().UTC().Format(time.RFC3339)
+}
+
+func nowISONanos() string {
+	return time.Now().UTC().Format(time.RFC3339Nano)
 }
 
 func uptime() (int, string) {
@@ -113,6 +122,60 @@ func clientIP(r *http.Request) string {
 		return r.RemoteAddr
 	}
 	return ip
+}
+
+func (sr *statusRecorder) WriteHeader(statusCode int) {
+	sr.statusCode = statusCode
+	sr.ResponseWriter.WriteHeader(statusCode)
+}
+
+func writeJSONLog(level string, message string, fields map[string]any) {
+	entry := map[string]any{
+		"timestamp": nowISONanos(),
+		"level":     level,
+		"logger":    "devops-info-service-go",
+		"message":   message,
+	}
+
+	for key, value := range fields {
+		entry[key] = value
+	}
+
+	if encoded, err := json.Marshal(entry); err == nil {
+		fmt.Println(string(encoded))
+		return
+	}
+
+	fmt.Printf("{\"timestamp\":\"%s\",\"level\":\"ERROR\",\"logger\":\"devops-info-service-go\",\"message\":\"failed to encode log entry\"}\n", nowISONanos())
+}
+
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		started := time.Now()
+		recorder := &statusRecorder{
+			ResponseWriter: w,
+			statusCode:     http.StatusOK,
+		}
+
+		next.ServeHTTP(recorder, r)
+
+		level := "INFO"
+		if recorder.statusCode >= http.StatusInternalServerError {
+			level = "ERROR"
+		} else if recorder.statusCode >= http.StatusBadRequest {
+			level = "WARN"
+		}
+
+		writeJSONLog(level, "HTTP request processed", map[string]any{
+			"event":       "http_request",
+			"method":      r.Method,
+			"path":        r.URL.Path,
+			"status_code": recorder.statusCode,
+			"client_ip":   clientIP(r),
+			"user_agent":  r.UserAgent(),
+			"duration_ms": float64(time.Since(started).Microseconds()) / 1000.0,
+		})
+	})
 }
 
 func mainHandler(w http.ResponseWriter, r *http.Request) {
@@ -170,8 +233,16 @@ func main() {
 	mux.HandleFunc("/health", healthHandler)
 
 	addr := host + ":" + port
-	log.Printf("Starting app on %s", addr)
-	if err := http.ListenAndServe(addr, mux); err != nil {
-		log.Fatal(err)
+	writeJSONLog("INFO", "Starting server", map[string]any{
+		"event": "startup",
+		"host":  host,
+		"port":  port,
+	})
+	if err := http.ListenAndServe(addr, loggingMiddleware(mux)); err != nil {
+		writeJSONLog("ERROR", "Server exited", map[string]any{
+			"event": "shutdown",
+			"error": err.Error(),
+		})
+		os.Exit(1)
 	}
 }
