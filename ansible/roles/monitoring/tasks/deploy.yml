@@ -4,6 +4,7 @@
     project_src: "{{ monitoring_dir }}"
     state: present
     pull: always
+    build: always
     recreate: auto
   register: monitoring_compose_result
 
@@ -35,4 +36,14 @@
   retries: 20
   delay: 5
   until: monitoring_grafana_ready.status == 200
+  changed_when: false
+
+- name: Wait for Prometheus health endpoint
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ prometheus_port }}/-/healthy"
+    status_code: 200
+  register: monitoring_prometheus_ready
+  retries: 20
+  delay: 5
+  until: monitoring_prometheus_ready.status == 200
   changed_when: false

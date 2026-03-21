@@ -1,12 +1,7 @@
-__pycache__/
-*.py[cod]
-*.log
 .venv/
-venv/
-.git/
-.gitignore
-.vscode/
-.idea/
-.DS_Store
-docs/
+.venv_lab08/
+__pycache__/
+.pytest_cache/
 tests/
+docs/
+coverage.xml

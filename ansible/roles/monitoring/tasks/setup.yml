@@ -8,11 +8,40 @@
     - "{{ monitoring_dir }}"
     - "{{ monitoring_dir }}/loki"
     - "{{ monitoring_dir }}/promtail"
+    - "{{ monitoring_dir }}/prometheus"
     - "{{ monitoring_dir }}/grafana"
     - "{{ monitoring_dir }}/grafana/provisioning"
     - "{{ monitoring_dir }}/grafana/provisioning/datasources"
     - "{{ monitoring_dir }}/grafana/provisioning/dashboards"
     - "{{ monitoring_dir }}/grafana/dashboards"
+    - "{{ monitoring_dir }}/app_python"
+    - "{{ monitoring_dir }}/app_go"
+
+- name: Copy Python application sources for remote build
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ monitoring_dir }}/app_python/{{ item.dest }}"
+    mode: "{{ item.mode | default('0644') }}"
+  loop:
+    - src: "{{ role_path }}/../../../app_python/app.py"
+      dest: app.py
+    - src: "{{ role_path }}/../../../app_python/requirements.txt"
+      dest: requirements.txt
+    - src: "{{ role_path }}/../../../app_python/Dockerfile"
+      dest: Dockerfile
+
+- name: Copy Go application sources for remote build
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ monitoring_dir }}/app_go/{{ item.dest }}"
+    mode: "{{ item.mode | default('0644') }}"
+  loop:
+    - src: "{{ role_path }}/../../../app_go/main.go"
+      dest: main.go
+    - src: "{{ role_path }}/../../../app_go/go.mod"
+      dest: go.mod
+    - src: "{{ role_path }}/../../../app_go/Dockerfile"
+      dest: Dockerfile
 
 - name: Render monitoring stack templates
   ansible.builtin.template:
@@ -26,12 +55,18 @@
       dest: "{{ monitoring_dir }}/loki/config.yml"
     - src: promtail-config.yml.j2
       dest: "{{ monitoring_dir }}/promtail/config.yml"
+    - src: prometheus.yml.j2
+      dest: "{{ monitoring_dir }}/prometheus/prometheus.yml"
     - src: grafana-datasource.yml.j2
       dest: "{{ monitoring_dir }}/grafana/provisioning/datasources/loki.yml"
+    - src: grafana-prometheus-datasource.yml.j2
+      dest: "{{ monitoring_dir }}/grafana/provisioning/datasources/prometheus.yml"
     - src: grafana-dashboard-provider.yml.j2
       dest: "{{ monitoring_dir }}/grafana/provisioning/dashboards/dashboard-provider.yml"
     - src: grafana-logs-dashboard.json.j2
       dest: "{{ monitoring_dir }}/grafana/dashboards/lab07-logs-dashboard.json"
+    - src: grafana-metrics-dashboard.json.j2
+      dest: "{{ monitoring_dir }}/grafana/dashboards/lab08-metrics-dashboard.json"
     - src: monitoring.env.j2
       dest: "{{ monitoring_dir }}/.env"
       mode: "0600"

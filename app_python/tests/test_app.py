@@ -43,3 +43,20 @@ def test_not_found(client):
     data = response.json()
     assert data["error"] == "Not Found"
     assert "message" in data
+
+
+def test_metrics_endpoint(client):
+    client.get("/")
+    client.get("/health")
+    response = client.get("/metrics")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/plain")
+
+    body = response.text
+    assert "http_requests_total" in body
+    assert "http_request_duration_seconds_bucket" in body
+    assert "http_requests_in_progress" in body
+    assert "devops_info_endpoint_calls_total" in body
+    assert 'endpoint="/"' in body
+    assert 'endpoint="/health"' in body

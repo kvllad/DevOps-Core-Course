@@ -1,0 +1,1 @@
+{"status":"success","data":{"resultType":"vector","result":[{"metric":{"endpoint":"/health"},"value":[1774105499.215,"0.18317358379690332"]},{"metric":{"endpoint":"/"},"value":[1774105499.215,"0.09087010768365544"]},{"metric":{"endpoint":"/error-test"},"value":[1774105499.215,"0.03634804307346218"]}]}}
