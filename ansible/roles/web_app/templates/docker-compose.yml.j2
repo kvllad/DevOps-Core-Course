@@ -1,0 +1,25 @@
+version: '{{ docker_compose_version }}'
+
+services:
+  {{ app_name }}:
+    image: {{ docker_image }}:{{ docker_tag }}
+    container_name: {{ app_name }}
+    ports:
+      - "{{ app_port }}:{{ app_internal_port }}"
+    environment:
+      # Environment values are injected from group_vars/defaults and may include Vault-backed secrets.
+{% for key, value in app_env.items() %}
+      {{ key }}: "{{ value }}"
+{% endfor %}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:{{ app_internal_port }}/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - {{ app_name }}-net
+
+networks:
+  {{ app_name }}-net:
+    driver: bridge

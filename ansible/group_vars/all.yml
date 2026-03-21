@@ -1,0 +1,26 @@
+---
+docker_users:
+  - ubuntu
+  - devops
+
+app_name: devops-app
+docker_image: vladkuznetsov/devops-info-service
+docker_tag: latest
+app_port: 8000
+app_internal_port: 8000
+compose_project_dir: "/opt/{{ app_name }}"
+docker_compose_version: "3.8"
+
+# Encrypted with: ansible-vault encrypt_string '<value>' --name 'app_secret_key'
+app_secret_key: !vault |
+  $ANSIBLE_VAULT;1.1;AES256
+  33653266343834626264396231613737326461393961393462373932616334396363626336623963
+  3433393836613164326261303766653562313466393061640a303138653963643435626231306239
+  64613739663565373834393765393264303366653666303331643465626533623761383232306337
+  3964356638346264350a316334613735346333636636376136323063633530323266303835613365
+  6430
+
+app_env:
+  APP_ENV: production
+  PORT: "{{ app_internal_port }}"
+  APP_SECRET_KEY: "{{ app_secret_key }}"

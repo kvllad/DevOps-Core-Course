@@ -1,0 +1,14 @@
+---
+app_name: devops-app
+docker_image: vladkuznetsov/devops-info-service
+docker_tag: latest
+app_port: 8000
+app_internal_port: 8000
+compose_project_dir: "/opt/{{ app_name }}"
+docker_compose_version: "3.8"
+# Set to true only when you intentionally want wipe tasks to run.
+web_app_wipe: false
+
+app_env:
+  APP_ENV: production
+  PORT: "{{ app_internal_port }}"

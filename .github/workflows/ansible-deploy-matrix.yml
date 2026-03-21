@@ -1,0 +1,76 @@
+name: Ansible Multi-App Deployment
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - .github/workflows/ansible-deploy-matrix.yml
+
+jobs:
+  deploy:
+    name: Matrix Deploy
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app:
+          - name: python
+            playbook: deploy_python.yml
+            port: 8000
+          - name: bonus
+            playbook: deploy_bonus.yml
+            port: 8001
+
+    env:
+      VM_HOST: ${{ secrets.VM_HOST }}
+      VM_USER: ${{ secrets.VM_USER }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Ansible runtime
+        run: pip install ansible
+
+      - name: Install required collection
+        run: ansible-galaxy collection install -r ansible/requirements.yml
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$VM_HOST" >> ~/.ssh/known_hosts
+
+      - name: Render CI inventory
+        working-directory: ansible
+        run: |
+          cat <<EOF > inventory/ci.ini
+          [webservers]
+          ci-target ansible_host=${VM_HOST} ansible_user=${VM_USER} ansible_ssh_private_key_file=~/.ssh/id_ed25519
+
+          [webservers:vars]
+          ansible_python_interpreter=/usr/bin/python3
+          EOF
+
+      - name: Deploy ${{ matrix.app.name }}
+        working-directory: ansible
+        run: |
+          printf '%s\n' "$ANSIBLE_VAULT_PASSWORD" > /tmp/vault_pass
+          ansible-playbook -i inventory/ci.ini playbooks/${{ matrix.app.playbook }} --vault-password-file /tmp/vault_pass
+          rm -f /tmp/vault_pass
+
+      - name: Verify ${{ matrix.app.name }}
+        run: |
+          sleep 10
+          curl -fsS "http://${VM_HOST}:${{ matrix.app.port }}/"
+          curl -fsS "http://${VM_HOST}:${{ matrix.app.port }}/health"
