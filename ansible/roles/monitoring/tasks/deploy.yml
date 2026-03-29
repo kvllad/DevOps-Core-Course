@@ -1,0 +1,49 @@
+---
+- name: Deploy monitoring stack with Docker Compose v2
+  community.docker.docker_compose_v2:
+    project_src: "{{ monitoring_dir }}"
+    state: present
+    pull: always
+    build: always
+    recreate: auto
+  register: monitoring_compose_result
+
+- name: Wait for Loki readiness
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ monitoring_loki_port }}/ready"
+    status_code: 200
+  register: monitoring_loki_ready
+  retries: 20
+  delay: 5
+  until: monitoring_loki_ready.status == 200
+  changed_when: false
+
+- name: Wait for Promtail targets endpoint
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ monitoring_promtail_port }}/targets"
+    status_code: 200
+  register: monitoring_promtail_ready
+  retries: 20
+  delay: 5
+  until: monitoring_promtail_ready.status == 200
+  changed_when: false
+
+- name: Wait for Grafana health endpoint
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ monitoring_grafana_port }}/api/health"
+    status_code: 200
+  register: monitoring_grafana_ready
+  retries: 20
+  delay: 5
+  until: monitoring_grafana_ready.status == 200
+  changed_when: false
+
+- name: Wait for Prometheus health endpoint
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ prometheus_port }}/-/healthy"
+    status_code: 200
+  register: monitoring_prometheus_ready
+  retries: 20
+  delay: 5
+  until: monitoring_prometheus_ready.status == 200
+  changed_when: false
