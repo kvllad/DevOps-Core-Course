@@ -1,0 +1,12 @@
+1. Get the release resources:
+   kubectl get all -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+2. Access the service:
+{{- if eq .Values.service.type "NodePort" }}
+   kubectl port-forward -n {{ .Release.Namespace }} service/{{ include "common.fullname" . }} 8080:{{ .Values.service.port }}
+{{- else }}
+   kubectl get svc -n {{ .Release.Namespace }} {{ include "common.fullname" . }}
+{{- end }}
+
+3. Inspect rendered values:
+   helm get values {{ .Release.Name }} -n {{ .Release.Namespace }}

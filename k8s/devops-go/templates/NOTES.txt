@@ -1,0 +1,5 @@
+1. Get the Go application resources:
+   kubectl get all -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+2. Access the Go service:
+   kubectl port-forward -n {{ .Release.Namespace }} service/{{ include "common.fullname" . }} 8081:{{ .Values.service.port }}
