@@ -1,0 +1,38 @@
+{{- if and .Values.hooks.enabled .Values.hooks.preInstall.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "common.fullname" . }}-pre-install
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": {{ .Values.hooks.preInstall.weight | quote }}
+    "helm.sh/hook-delete-policy": {{ .Values.hooks.cleanupPolicy | quote }}
+spec:
+  template:
+    metadata:
+      labels:
+        {{- include "common.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: pre-install-validation
+          image: "{{ .Values.hooks.image.repository }}:{{ .Values.hooks.image.tag }}"
+          imagePullPolicy: {{ .Values.hooks.image.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - >
+              echo "Validating release ${RELEASE_NAME} in namespace ${RELEASE_NAMESPACE}";
+              echo "replicas=${REPLICA_COUNT} image={{ .Values.image.repository }}:{{ .Values.image.tag }} serviceType={{ .Values.service.type }}";
+              sleep {{ .Values.hooks.preInstall.sleepSeconds }};
+              echo "Pre-install validation complete";
+          env:
+            - name: RELEASE_NAME
+              value: {{ .Release.Name | quote }}
+            - name: RELEASE_NAMESPACE
+              value: {{ .Release.Namespace | quote }}
+            - name: REPLICA_COUNT
+              value: {{ .Values.replicaCount | quote }}
+{{- end }}
