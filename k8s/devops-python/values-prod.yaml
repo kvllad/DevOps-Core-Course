@@ -10,6 +10,10 @@ service:
 env:
   DEPLOYMENT_TRACK: prod
 
+app:
+  environment: prod
+  logLevel: info
+
 resources:
   requests:
     cpu: 200m
