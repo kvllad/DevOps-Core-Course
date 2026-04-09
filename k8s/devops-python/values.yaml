@@ -19,6 +19,30 @@ service:
 env:
   DEPLOYMENT_TRACK: helm
 
+app:
+  environment: dev
+  logLevel: info
+
+secrets:
+  enabled: true
+  type: Opaque
+  name: ""
+  data:
+    username: "change-me-username"
+    password: "change-me-password"
+
+serviceAccount:
+  create: true
+  name: ""
+  automount: false
+
+vault:
+  enabled: false
+  role: devops-python-role
+  secretPath: secret/data/myapp/config
+  renderFile: config
+  command: "chmod 0440 /vault/secrets/config"
+
 podAnnotations: {}
 podLabels: {}
 
