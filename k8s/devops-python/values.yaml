@@ -5,7 +5,7 @@ replicaCount: 3
 
 image:
   repository: vladk6813050/devops-info-service-py
-  tag: lab02
+  tag: lab12
   pullPolicy: IfNotPresent
 
 containerPort: 5000
@@ -22,6 +22,22 @@ env:
 app:
   environment: dev
   logLevel: info
+
+configMaps:
+  file:
+    enabled: true
+    name: ""
+    mountPath: /config
+    fileName: config.json
+  env:
+    enabled: true
+    name: ""
+    data:
+      APP_NAME: devops-info-service
+      APP_ENV: dev
+      LOG_LEVEL: info
+      FEATURE_VISITS_COUNTER: "true"
+      VISITS_FILE: /data/visits
 
 secrets:
   enabled: true
@@ -49,6 +65,7 @@ podLabels: {}
 podSecurityContext:
   runAsUser: 1000
   runAsGroup: 1000
+  fsGroup: 1000
   runAsNonRoot: true
   seccompProfile:
     type: RuntimeDefault
@@ -67,6 +84,15 @@ resources:
   limits:
     cpu: 250m
     memory: 256Mi
+
+persistence:
+  enabled: true
+  name: ""
+  mountPath: /data
+  accessModes:
+    - ReadWriteOnce
+  size: 100Mi
+  storageClass: ""
 
 probes:
   startup:

@@ -5,8 +5,11 @@ import logging
 import os
 import platform
 import socket
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from typing import Any, Dict
+from pathlib import Path
+from threading import Lock
+from typing import Any, AsyncIterator, Dict
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -20,13 +23,24 @@ logger = logging.getLogger("devops-info-service")
 HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", "5000"))
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
+VISITS_FILE = Path(os.getenv("VISITS_FILE", "/data/visits"))
+VISITS_LOCK_FILE = Path(os.getenv("VISITS_LOCK_FILE", f"{VISITS_FILE}.lock"))
 
 START_TIME = datetime.now(timezone.utc)
+VISITS_LOCK = Lock()
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    logger.info("Visits counter initialized at %s from %s", get_visits_count(), VISITS_FILE)
+    yield
+
 
 app = FastAPI(
     title="DevOps Info Service",
     version="1.0.0",
     description="DevOps course info service",
+    lifespan=lifespan,
 )
 
 
@@ -56,6 +70,55 @@ def _get_system_info() -> Dict[str, Any]:
     }
 
 
+def _read_visits_unlocked() -> int:
+    try:
+        raw_value = VISITS_FILE.read_text(encoding="utf-8").strip()
+    except FileNotFoundError:
+        return 0
+
+    if not raw_value:
+        return 0
+
+    try:
+        return max(0, int(raw_value))
+    except ValueError:
+        logger.warning("Invalid visits counter value in %s; treating as 0", VISITS_FILE)
+        return 0
+
+
+def _write_visits_unlocked(count: int) -> None:
+    VISITS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    tmp_file = VISITS_FILE.with_name(f"{VISITS_FILE.name}.tmp")
+    tmp_file.write_text(f"{count}\n", encoding="utf-8")
+    os.replace(tmp_file, VISITS_FILE)
+
+
+def _with_visits_lock(callback):
+    import fcntl
+
+    VISITS_LOCK_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with VISITS_LOCK:
+        with VISITS_LOCK_FILE.open("a+", encoding="utf-8") as lock_file:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+            try:
+                return callback()
+            finally:
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+
+
+def get_visits_count() -> int:
+    return _with_visits_lock(_read_visits_unlocked)
+
+
+def increment_visits_count() -> int:
+    def update_count() -> int:
+        count = _read_visits_unlocked() + 1
+        _write_visits_unlocked(count)
+        return count
+
+    return _with_visits_lock(update_count)
+
+
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     logger.info("Request: %s %s", request.method, request.url.path)
@@ -66,6 +129,7 @@ async def log_requests(request: Request, call_next):
 @app.get("/")
 async def index(request: Request) -> Dict[str, Any]:
     uptime = _get_uptime()
+    visits = increment_visits_count()
     return {
         "service": {
             "name": "devops-info-service",
@@ -86,6 +150,10 @@ async def index(request: Request) -> Dict[str, Any]:
             "method": request.method,
             "path": request.url.path,
         },
+        "visits": {
+            "count": visits,
+            "storage_file": str(VISITS_FILE),
+        },
         "endpoints": [
             {
                 "path": "/",
@@ -97,7 +165,20 @@ async def index(request: Request) -> Dict[str, Any]:
                 "method": "GET",
                 "description": "Health check",
             },
+            {
+                "path": "/visits",
+                "method": "GET",
+                "description": "Current root endpoint visit count",
+            },
         ],
+    }
+
+
+@app.get("/visits")
+async def visits() -> Dict[str, Any]:
+    return {
+        "count": get_visits_count(),
+        "storage_file": str(VISITS_FILE),
     }
 
 

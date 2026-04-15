@@ -4,7 +4,7 @@
 [![Coverage](https://codecov.io/gh/kvllad/DevOps-Core-Course/branch/master/graph/badge.svg)](https://codecov.io/gh/kvllad/DevOps-Core-Course)
 
 ## Overview
-This service exposes system and runtime information for DevOps learning labs. It provides a main endpoint with detailed metadata and a simple health check for monitoring.
+This service exposes system and runtime information for DevOps learning labs. It provides a main endpoint with detailed metadata, a persistent visits counter, and a simple health check for monitoring.
 
 ## Prerequisites
 - Python 3.11+
@@ -34,6 +34,7 @@ Run tests with coverage (pattern):
 
 ## API Endpoints
 - `GET /` - Service and system information
+- `GET /visits` - Current number of root endpoint visits
 - `GET /health` - Health check
 
 ## Configuration
@@ -42,6 +43,7 @@ Run tests with coverage (pattern):
 | `HOST` | `0.0.0.0` | Bind address |
 | `PORT` | `5000` | Port to listen on |
 | `DEBUG` | `False` | Enables auto-reload when `true` |
+| `VISITS_FILE` | `/data/visits` | File path used to persist the root endpoint visit counter |
 
 ## Docker
 Build the image locally (pattern):
@@ -53,3 +55,14 @@ Run a container (pattern):
 Pull from Docker Hub (pattern):
 `docker pull <dockerhub-username>/<image-name>:<tag>`
 `docker run --rm -p <host-port>:5000 <dockerhub-username>/<image-name>:<tag>`
+
+Run locally with persistent visit storage:
+```bash
+cd app_python
+docker compose up --build
+curl http://127.0.0.1:5000/
+curl http://127.0.0.1:5000/visits
+cat data/visits
+docker compose restart devops-info-service
+curl http://127.0.0.1:5000/visits
+```

@@ -10,6 +10,7 @@ def test_root_structure(client):
     assert "system" in data
     assert "runtime" in data
     assert "request" in data
+    assert "visits" in data
     assert "endpoints" in data
 
     service = data["service"]
@@ -24,6 +25,20 @@ def test_root_structure(client):
     assert isinstance(endpoints, list)
     assert any(ep["path"] == "/" for ep in endpoints)
     assert any(ep["path"] == "/health" for ep in endpoints)
+    assert any(ep["path"] == "/visits" for ep in endpoints)
+
+
+def test_visits_counter_persists_to_file(client):
+    assert client.get("/visits").json()["count"] == 0
+
+    first = client.get("/")
+    second = client.get("/")
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert first.json()["visits"]["count"] == 1
+    assert second.json()["visits"]["count"] == 2
+    assert client.get("/visits").json()["count"] == 2
 
 
 def test_health_endpoint(client):

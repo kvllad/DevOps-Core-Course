@@ -1,0 +1,10 @@
+services:
+  devops-info-service:
+    build: .
+    image: devops-info-service-py:lab12
+    ports:
+      - "5000:5000"
+    environment:
+      VISITS_FILE: /data/visits
+    volumes:
+      - ./data:/data

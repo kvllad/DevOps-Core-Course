@@ -1,7 +1,7 @@
 replicaCount: 3
 
 image:
-  tag: lab02
+  tag: lab12
 
 service:
   type: LoadBalancer
@@ -13,6 +13,12 @@ env:
 app:
   environment: prod
   logLevel: info
+
+configMaps:
+  env:
+    data:
+      APP_ENV: prod
+      LOG_LEVEL: info
 
 resources:
   requests:

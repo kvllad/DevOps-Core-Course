@@ -10,6 +10,39 @@ Resolve Secret name. Uses provided override when set.
 {{- end -}}
 
 {{/*
+Resolve file ConfigMap name. Uses provided override when set.
+*/}}
+{{- define "devops-python.configMapName" -}}
+{{- if .Values.configMaps.file.name -}}
+{{- .Values.configMaps.file.name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-config" (include "common.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Resolve environment ConfigMap name. Uses provided override when set.
+*/}}
+{{- define "devops-python.envConfigMapName" -}}
+{{- if .Values.configMaps.env.name -}}
+{{- .Values.configMaps.env.name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-env" (include "common.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Resolve PVC name. Uses provided override when set.
+*/}}
+{{- define "devops-python.pvcName" -}}
+{{- if .Values.persistence.name -}}
+{{- .Values.persistence.name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-data" (include "common.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Resolve ServiceAccount name. Uses provided override when set.
 */}}
 {{- define "devops-python.serviceAccountName" -}}
@@ -28,10 +61,6 @@ Common environment variables for the container.
 {{- define "devops-python.envVars" -}}
 - name: PORT
   value: {{ .Values.containerPort | quote }}
-- name: APP_ENV
-  value: {{ .Values.app.environment | quote }}
-- name: LOG_LEVEL
-  value: {{ .Values.app.logLevel | quote }}
 {{- range $name, $value := .Values.env }}
 - name: {{ $name }}
   value: {{ $value | quote }}

@@ -1,0 +1,14 @@
+{
+  "application": {
+    "name": "devops-info-service",
+    "environment": "dev"
+  },
+  "features": {
+    "visitsCounter": true,
+    "configHotReload": true
+  },
+  "settings": {
+    "visitsFile": "/data/visits",
+    "timezone": "UTC"
+  }
+}

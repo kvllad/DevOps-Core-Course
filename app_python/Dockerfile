@@ -5,7 +5,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-RUN groupadd --system app && useradd --system --gid app --create-home --home /home/app app
+RUN groupadd --system app \
+    && useradd --system --gid app --create-home --home /home/app app \
+    && mkdir -p /data \
+    && chown app:app /data
 
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
@@ -14,5 +17,6 @@ COPY --chown=app:app app.py ./
 
 USER app
 EXPOSE 5000
+VOLUME ["/data"]
 
 CMD ["python", "app.py"]
