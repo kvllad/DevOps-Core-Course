@@ -10,17 +10,19 @@ spec:
         elements:
           - env: dev
             namespace: dev
-            releaseName: python-app-dev
+            appName: python-appset-dev
+            releaseName: python-appset-dev
             valueFile: values-dev.yaml
             autoSync: true
           - env: prod
             namespace: prod
-            releaseName: python-app-prod
+            appName: python-appset-prod
+            releaseName: python-appset-prod
             valueFile: values-prod.yaml
             autoSync: false
   template:
     metadata:
-      name: '{{ .releaseName }}'
+      name: '{{ .appName }}'
     spec:
       project: default
       source:
