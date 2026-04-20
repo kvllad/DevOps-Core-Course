@@ -122,7 +122,7 @@ probes:
     failureThreshold: 3
 
 hooks:
-  enabled: true
+  enabled: false
   cleanupPolicy: before-hook-creation,hook-succeeded
   image:
     repository: busybox
