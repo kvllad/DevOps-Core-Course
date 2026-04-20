@@ -1,11 +1,11 @@
 replicaCount: 1
 
 image:
-  tag: lab12
+  tag: lab13
 
 service:
-  type: NodePort
-  nodePort: 31080
+  type: ClusterIP
+  nodePort: null
 
 env:
   DEPLOYMENT_TRACK: dev
@@ -17,8 +17,11 @@ app:
 configMaps:
   env:
     data:
+      APP_NAME: devops-info-service
       APP_ENV: dev
       LOG_LEVEL: debug
+      FEATURE_VISITS_COUNTER: "true"
+      VISITS_FILE: /data/visits
 
 resources:
   requests:

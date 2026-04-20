@@ -1,10 +1,10 @@
 replicaCount: 3
 
 image:
-  tag: lab12
+  tag: lab13
 
 service:
-  type: LoadBalancer
+  type: ClusterIP
   nodePort: null
 
 env:
@@ -17,8 +17,11 @@ app:
 configMaps:
   env:
     data:
+      APP_NAME: devops-info-service
       APP_ENV: prod
       LOG_LEVEL: info
+      FEATURE_VISITS_COUNTER: "true"
+      VISITS_FILE: /data/visits
 
 resources:
   requests:

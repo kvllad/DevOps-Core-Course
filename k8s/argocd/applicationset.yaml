@@ -1,0 +1,49 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: python-apps
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+    - list:
+        elements:
+          - env: dev
+            namespace: dev
+            releaseName: python-app-dev
+            valueFile: values-dev.yaml
+            autoSync: true
+          - env: prod
+            namespace: prod
+            releaseName: python-app-prod
+            valueFile: values-prod.yaml
+            autoSync: false
+  template:
+    metadata:
+      name: '{{ .releaseName }}'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/kvllad/DevOps-Core-Course.git
+        targetRevision: lab13
+        path: k8s/devops-python
+        helm:
+          releaseName: '{{ .releaseName }}'
+          valueFiles:
+            - '{{ .valueFile }}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{ .namespace }}'
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+  templatePatch: |
+    {{- if .autoSync }}
+    spec:
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+    {{- end }}

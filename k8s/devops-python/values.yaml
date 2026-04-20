@@ -4,17 +4,17 @@ fullnameOverride: ""
 replicaCount: 3
 
 image:
-  repository: vladk6813050/devops-info-service-py
-  tag: lab12
+  repository: devops-info-service-py
+  tag: lab13
   pullPolicy: IfNotPresent
 
 containerPort: 5000
 
 service:
-  type: NodePort
+  type: ClusterIP
   port: 80
   targetPort: 5000
-  nodePort: 31080
+  nodePort: null
 
 env:
   DEPLOYMENT_TRACK: helm
