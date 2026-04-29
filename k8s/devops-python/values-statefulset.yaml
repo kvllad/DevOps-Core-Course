@@ -1,0 +1,28 @@
+replicaCount: 3
+
+rollout:
+  enabled: false
+
+statefulset:
+  enabled: true
+  podManagementPolicy: OrderedReady
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      partition: 0
+
+env:
+  DEPLOYMENT_TRACK: stateful-v1
+
+app:
+  environment: statefulset
+  logLevel: info
+
+configMaps:
+  env:
+    data:
+      APP_NAME: devops-info-service
+      APP_ENV: statefulset
+      LOG_LEVEL: info
+      FEATURE_VISITS_COUNTER: "true"
+      VISITS_FILE: /data/visits

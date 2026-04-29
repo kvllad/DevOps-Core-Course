@@ -1,0 +1,7 @@
+statefulset:
+  enabled: true
+  updateStrategy:
+    type: OnDelete
+
+env:
+  DEPLOYMENT_TRACK: stateful-ondelete
