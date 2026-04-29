@@ -1,0 +1,9 @@
+rollout:
+  enabled: true
+  strategy: canary
+  analysis:
+    enabled: true
+    path: /does-not-exist
+
+env:
+  DEPLOYMENT_TRACK: canary-fail

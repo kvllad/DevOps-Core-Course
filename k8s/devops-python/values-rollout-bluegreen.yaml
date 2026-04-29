@@ -1,0 +1,23 @@
+replicaCount: 3
+
+rollout:
+  enabled: true
+  strategy: blueGreen
+  blueGreen:
+    autoPromotionEnabled: false
+
+env:
+  DEPLOYMENT_TRACK: blue-v1
+
+app:
+  environment: bluegreen
+  logLevel: info
+
+configMaps:
+  env:
+    data:
+      APP_NAME: devops-info-service
+      APP_ENV: bluegreen
+      LOG_LEVEL: info
+      FEATURE_VISITS_COUNTER: "true"
+      VISITS_FILE: /data/visits

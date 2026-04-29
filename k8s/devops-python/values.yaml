@@ -5,7 +5,7 @@ replicaCount: 3
 
 image:
   repository: devops-info-service-py
-  tag: lab13
+  tag: lab14
   pullPolicy: IfNotPresent
 
 containerPort: 5000
@@ -136,3 +136,57 @@ hooks:
     enabled: true
     weight: "5"
     sleepSeconds: 12
+
+rollout:
+  enabled: false
+  strategy: canary
+  canary:
+    maxSurge: 1
+    maxUnavailable: 0
+  blueGreen:
+    autoPromotionEnabled: false
+  analysis:
+    enabled: false
+    path: /health
+    jsonPath: "{$.status}"
+    successCondition: result == 'healthy'
+    interval: 10s
+    count: 3
+    failureLimit: 1
+
+statefulset:
+  enabled: false
+  podManagementPolicy: OrderedReady
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      partition: 0
+
+initContainers:
+  enabled: false
+  sharedVolume:
+    mountPath: /init-data
+  download:
+    enabled: false
+    url: https://example.com
+    outputPath: /init-data/index.html
+    image:
+      repository: busybox
+      tag: "1.36"
+      pullPolicy: IfNotPresent
+  waitForService:
+    enabled: false
+    host: kubernetes.default.svc.cluster.local
+    intervalSeconds: 2
+    image:
+      repository: busybox
+      tag: "1.36"
+      pullPolicy: IfNotPresent
+
+serviceMonitor:
+  enabled: false
+  labels:
+    release: monitoring
+  interval: 30s
+  scrapeTimeout: 10s
+  path: /metrics

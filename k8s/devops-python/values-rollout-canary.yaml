@@ -1,0 +1,23 @@
+replicaCount: 5
+
+rollout:
+  enabled: true
+  strategy: canary
+  analysis:
+    enabled: true
+
+env:
+  DEPLOYMENT_TRACK: canary-v1
+
+app:
+  environment: canary
+  logLevel: debug
+
+configMaps:
+  env:
+    data:
+      APP_NAME: devops-info-service
+      APP_ENV: canary
+      LOG_LEVEL: debug
+      FEATURE_VISITS_COUNTER: "true"
+      VISITS_FILE: /data/visits

@@ -1,0 +1,19 @@
+{{- if and .Values.rollout.enabled (eq .Values.rollout.strategy "canary") .Values.rollout.analysis.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: {{ include "devops-python.analysisTemplateName" . }}
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+spec:
+  metrics:
+    - name: webcheck
+      interval: {{ .Values.rollout.analysis.interval }}
+      count: {{ .Values.rollout.analysis.count }}
+      failureLimit: {{ .Values.rollout.analysis.failureLimit }}
+      provider:
+        web:
+          url: {{ printf "http://%s.%s.svc.cluster.local%s" (include "common.fullname" .) .Release.Namespace .Values.rollout.analysis.path | quote }}
+          jsonPath: "{{ .Values.rollout.analysis.jsonPath }}"
+      successCondition: {{ .Values.rollout.analysis.successCondition | quote }}
+{{- end }}

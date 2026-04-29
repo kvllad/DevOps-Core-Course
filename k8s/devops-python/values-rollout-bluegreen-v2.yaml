@@ -1,0 +1,6 @@
+rollout:
+  enabled: true
+  strategy: blueGreen
+
+env:
+  DEPLOYMENT_TRACK: green-v2
