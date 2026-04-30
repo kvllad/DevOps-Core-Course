@@ -1,0 +1,1 @@
+/nix/store/v1k46wwl0lz6v8yjxdrccaji9gvajr72-devops-info-service-1.0.0

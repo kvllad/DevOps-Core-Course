@@ -1,0 +1,12 @@
+2026-04-30 22:25:11,094 - devops-info-service - INFO - Starting app on 0.0.0.0:5000 (debug=False)
+INFO:     Started server process [780]
+INFO:     Waiting for application startup.
+2026-04-30 22:25:11,104 - devops-info-service - INFO - Visits counter initialized at 0 from /data/visits
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:5000 (Press CTRL+C to quit)
+2026-04-30 22:26:44,227 - devops-info-service - INFO - Request: GET /health
+INFO:     127.0.0.1:47348 - "GET /health HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [780]
