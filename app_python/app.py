@@ -5,6 +5,7 @@ import logging
 import os
 import platform
 import socket
+import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -12,7 +13,8 @@ from threading import Lock
 from typing import Any, AsyncIterator, Dict
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, generate_latest
 
 logging.basicConfig(
     level=logging.INFO,
@@ -28,11 +30,38 @@ VISITS_LOCK_FILE = Path(os.getenv("VISITS_LOCK_FILE", f"{VISITS_FILE}.lock"))
 
 START_TIME = datetime.now(timezone.utc)
 VISITS_LOCK = Lock()
+HTTP_REQUESTS_TOTAL = Counter(
+    "devops_info_http_requests_total",
+    "Total HTTP requests handled by the application.",
+    ["method", "path", "status_code"],
+)
+HTTP_REQUEST_DURATION_SECONDS = Histogram(
+    "devops_info_http_request_duration_seconds",
+    "HTTP request latency in seconds.",
+    ["method", "path"],
+)
+VISITS_COUNT_GAUGE = Gauge(
+    "devops_info_visits_count",
+    "Current persisted visits counter value.",
+)
+APP_INFO_GAUGE = Gauge(
+    "devops_info_build_info",
+    "Static application metadata.",
+    ["version", "framework", "environment", "deployment_track"],
+)
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
-    logger.info("Visits counter initialized at %s from %s", get_visits_count(), VISITS_FILE)
+    visits = get_visits_count()
+    VISITS_COUNT_GAUGE.set(visits)
+    APP_INFO_GAUGE.labels(
+        version="1.0.0",
+        framework="FastAPI",
+        environment=os.getenv("APP_ENV", ""),
+        deployment_track=os.getenv("DEPLOYMENT_TRACK", ""),
+    ).set(1)
+    logger.info("Visits counter initialized at %s from %s", visits, VISITS_FILE)
     yield
 
 
@@ -122,7 +151,18 @@ def increment_visits_count() -> int:
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     logger.info("Request: %s %s", request.method, request.url.path)
+    start = time.perf_counter()
     response = await call_next(request)
+    duration = time.perf_counter() - start
+    HTTP_REQUESTS_TOTAL.labels(
+        method=request.method,
+        path=request.url.path,
+        status_code=str(response.status_code),
+    ).inc()
+    HTTP_REQUEST_DURATION_SECONDS.labels(
+        method=request.method,
+        path=request.url.path,
+    ).observe(duration)
     return response
 
 
@@ -130,12 +170,17 @@ async def log_requests(request: Request, call_next):
 async def index(request: Request) -> Dict[str, Any]:
     uptime = _get_uptime()
     visits = increment_visits_count()
+    VISITS_COUNT_GAUGE.set(visits)
     return {
         "service": {
             "name": "devops-info-service",
             "version": "1.0.0",
             "description": "DevOps course info service",
             "framework": "FastAPI",
+        },
+        "deployment": {
+            "track": os.getenv("DEPLOYMENT_TRACK", ""),
+            "environment": os.getenv("APP_ENV", ""),
         },
         "system": _get_system_info(),
         "runtime": {
@@ -170,14 +215,21 @@ async def index(request: Request) -> Dict[str, Any]:
                 "method": "GET",
                 "description": "Current root endpoint visit count",
             },
+            {
+                "path": "/metrics",
+                "method": "GET",
+                "description": "Prometheus metrics",
+            },
         ],
     }
 
 
 @app.get("/visits")
 async def visits() -> Dict[str, Any]:
+    count = get_visits_count()
+    VISITS_COUNT_GAUGE.set(count)
     return {
-        "count": get_visits_count(),
+        "count": count,
         "storage_file": str(VISITS_FILE),
     }
 
@@ -190,6 +242,12 @@ async def health() -> Dict[str, Any]:
         "timestamp": _iso_utc_now(),
         "uptime_seconds": uptime["seconds"],
     }
+
+
+@app.get("/metrics")
+async def metrics() -> Response:
+    VISITS_COUNT_GAUGE.set(get_visits_count())
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
 @app.exception_handler(404)
@@ -215,4 +273,4 @@ if __name__ == "__main__":
     import uvicorn
 
     logger.info("Starting app on %s:%s (debug=%s)", HOST, PORT, DEBUG)
-    uvicorn.run("app:app", host=HOST, port=PORT, reload=DEBUG)
+    uvicorn.run(app, host=HOST, port=PORT, reload=DEBUG)

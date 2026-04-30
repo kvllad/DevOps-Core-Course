@@ -1,0 +1,42 @@
+image:
+  tag: lab16
+
+rollout:
+  enabled: false
+
+statefulset:
+  enabled: true
+  podManagementPolicy: OrderedReady
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      partition: 0
+
+env:
+  DEPLOYMENT_TRACK: monitoring
+
+app:
+  environment: monitoring
+  logLevel: info
+
+configMaps:
+  env:
+    data:
+      APP_NAME: devops-info-service
+      APP_ENV: monitoring
+      LOG_LEVEL: info
+      FEATURE_VISITS_COUNTER: "true"
+      VISITS_FILE: /data/visits
+
+initContainers:
+  enabled: true
+  download:
+    enabled: true
+    url: https://example.com
+  waitForService:
+    enabled: true
+    host: monitoring-grafana.monitoring.svc.cluster.local
+    intervalSeconds: 2
+
+serviceMonitor:
+  enabled: true

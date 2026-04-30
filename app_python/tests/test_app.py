@@ -7,6 +7,7 @@ def test_root_structure(client):
 
     data = response.json()
     assert "service" in data
+    assert "deployment" in data
     assert "system" in data
     assert "runtime" in data
     assert "request" in data
@@ -17,6 +18,10 @@ def test_root_structure(client):
     assert service["name"] == "devops-info-service"
     assert service["framework"] == "FastAPI"
 
+    deployment = data["deployment"]
+    assert isinstance(deployment["track"], str)
+    assert isinstance(deployment["environment"], str)
+
     runtime = data["runtime"]
     assert runtime["timezone"] == "UTC"
     assert isinstance(runtime["uptime_seconds"], int)
@@ -26,6 +31,7 @@ def test_root_structure(client):
     assert any(ep["path"] == "/" for ep in endpoints)
     assert any(ep["path"] == "/health" for ep in endpoints)
     assert any(ep["path"] == "/visits" for ep in endpoints)
+    assert any(ep["path"] == "/metrics" for ep in endpoints)
 
 
 def test_visits_counter_persists_to_file(client):
@@ -49,6 +55,17 @@ def test_health_endpoint(client):
     assert data["status"] == "healthy"
     assert isinstance(data["uptime_seconds"], int)
     assert "timestamp" in data
+
+
+def test_metrics_endpoint(client):
+    client.get("/")
+    response = client.get("/metrics")
+
+    assert response.status_code == 200
+    assert "text/plain" in response.headers["content-type"]
+    body = response.text
+    assert "devops_info_http_requests_total" in body
+    assert "devops_info_visits_count" in body
 
 
 def test_not_found(client):
